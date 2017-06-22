@@ -1,0 +1,32 @@
+<h2>Listing time job</h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>Start time</th>
+      <th>End time</th>
+      <th>Run mins</th>
+      <th>Program name</th>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for time_job <- @time_job do %>
+    <tr>
+      <td><%= time_job.start_time %></td>
+      <td><%= time_job.end_time %></td>
+      <td><%= time_job.run_mins %></td>
+      <td><%= time_job.program_name %></td>
+
+      <td class="text-right">
+        <%= link "Show", to: time_job_path(@conn, :show, time_job), class: "btn btn-default btn-xs" %>
+        <%= link "Edit", to: time_job_path(@conn, :edit, time_job), class: "btn btn-default btn-xs" %>
+        <%= link "Delete", to: time_job_path(@conn, :delete, time_job), method: :delete, data: [confirm: "Are you sure?"], class: "btn btn-danger btn-xs" %>
+      </td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
+
+<%= link "New time job", to: time_job_path(@conn, :new) %>

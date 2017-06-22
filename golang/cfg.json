@@ -1,0 +1,6 @@
+{
+  "server": "localhost:4000",
+  "name": "m1",
+  "debug": true,
+  "linux": true
+}

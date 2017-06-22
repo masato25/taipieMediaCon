@@ -1,0 +1,26 @@
+.rbc-row:nth-child(2) {
+  display: none;
+}
+
+._bigcal {
+  margin: 10px;
+}
+
+.main_layout {
+  background: white;
+}
+
+.copyAllDayItemDiv{
+  position: relative;
+  left: 10px;
+  padding-top: 10px;
+}
+
+._creat_modal_row{
+  padding: 10px;
+}
+
+._creat_modal_title{
+  font-size: "14px";
+  font-weight: "bold";
+}

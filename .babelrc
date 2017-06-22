@@ -1,0 +1,13 @@
+{
+  "plugins": [
+    "recharts",
+    [ "import",
+      {
+        "libraryName": "antd",
+        "style": true,
+        "theme": {
+          "primary-color": "#1DA57A",
+        }
+      }
+    ]]
+}

@@ -1,0 +1,28 @@
+<h2>Show time job</h2>
+
+<ul>
+
+  <li>
+    <strong>Start time:</strong>
+    <%= @time_job.start_time %>
+  </li>
+
+  <li>
+    <strong>End time:</strong>
+    <%= @time_job.end_time %>
+  </li>
+
+  <li>
+    <strong>Run mins:</strong>
+    <%= @time_job.run_mins %>
+  </li>
+
+  <li>
+    <strong>Program name:</strong>
+    <%= @time_job.program_name %>
+  </li>
+
+</ul>
+
+<%= link "Edit", to: time_job_path(@conn, :edit, @time_job) %>
+<%= link "Back", to: time_job_path(@conn, :index) %>

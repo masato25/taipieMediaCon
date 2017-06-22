@@ -1,0 +1,6 @@
+<h2>Edit time job</h2>
+
+<%= render "form.html", changeset: @changeset,
+                        action: time_job_path(@conn, :update, @time_job) %>
+
+<%= link "Back", to: time_job_path(@conn, :index) %>
