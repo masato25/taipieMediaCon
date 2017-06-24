@@ -14,7 +14,8 @@ import {ModalAddJob} from './component/modal_add_job.js'
 import {getDefaultData, addJobAction, handleCancel_AddAction,
         handleLOk_AddAction, showModalAddAction, setPorgramAction,
         setEtimeAction, setStimeAction, setDateAction,
-        deleteJobAction, setAddAction_Action,copyJobsAction_Action, getTemplateId} from './actions/actions.js'
+        deleteJobAction, setAddAction_Action,copyJobsAction_Action, 
+        getTemplateId, getTemplateName} from './actions/actions.js'
 import ifetch from '../common/fetch.js'
 
 const $ = require('jquery')
@@ -48,6 +49,7 @@ class MainTest extends React.Component {
       addAction: "add",
       copyToHour: 1,
       template_id: parseInt(getTemplateId()),
+      templateName: "未知",
       updateObj: {
         date: '',
         stime: '',
@@ -55,6 +57,9 @@ class MainTest extends React.Component {
         program_id: 0
       },
     }
+    getTemplateName().then((e) => {
+      this.state.templateName = e.data.name
+    })
     this.showModalAdd = this.showModalAdd.bind(this)
     this.setDate = this.setDate.bind(this)
     this.setStime = this.setStime.bind(this)
@@ -166,6 +171,7 @@ class MainTest extends React.Component {
           pushDataToEvents={this.pushDataToEvents}
           deleteEvents={this.deleteEvents}
           job_template_id = {this.state.template_id}
+          templateName = {this.state.templateName}
         ></JobSetter>
         <ModalAddJob
           visible={this.state.visibleAdd}

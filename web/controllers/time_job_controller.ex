@@ -75,12 +75,18 @@ defmodule TaipieMediaCon.TimeJobController do
   # json controllers #
   # **************** #
 
+  def getLimitTimeQuery() do
+    # 預設只能看60天前內
+    currentTime = DateTime.to_unix(Timex.now(), :second) - (86400 * 60)
+      |> Ecto.DateTime.from_unix!(:second)
+  end
+
   def list(conn, %{"template_id" => template_id}) do
     template_id = String.to_integer(template_id)
     time_job = Repo.all(
       from t in TimeJob,
       join: p in Program,
-      where: t.program_id == p.id and t.job_template_id == ^template_id,
+      where: t.program_id == p.id and t.job_template_id == ^template_id and t.end_time > ^getLimitTimeQuery(),
       select: { t.id, t.start_time, t.end_time, p.name, p.id }
     ) |>
       Enum.map(fn o ->
@@ -146,7 +152,7 @@ defmodule TaipieMediaCon.TimeJobController do
     json %{ message: "deleted all date", data: deleted_list }
   end
 
-  defp checkrunningJob(tid) do
+  def checkrunningJob(tid) do
     Repo.all(
       from a in Avatar,
       where: a.time_job_id == ^tid) |> Enum.count()
@@ -281,9 +287,11 @@ defmodule TaipieMediaCon.TimeJobController do
     o = Map.get(tmpo, :changes)
     stime = Map.get(o, :start_time)
     etime = Map.get(o, :end_time)
+    template_id = Map.get(o, :job_template_id)
     res = Repo.all(
             from tj in TimeJob,
-            where: (^stime >= tj.start_time and ^stime < tj.end_time) or (^etime > tj.start_time and ^etime <= tj.end_time )
+            where: 
+            ((^stime >= tj.start_time and ^stime < tj.end_time) or (^etime > tj.start_time and ^etime <= tj.end_time )) and tj.job_template_id == ^template_id
           )
     Enum.count(res) != 0
   end

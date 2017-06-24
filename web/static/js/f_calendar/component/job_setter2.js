@@ -246,6 +246,7 @@ class JobSetter extends React.Component {
             </TabPane>
           </Tabs>
         </Modal>
+        <h1>{this.props.templateName}</h1>
         <Button onClick={this.showModal}>
           <Icon type="rocket" style={{color: '#4a139c'}} />
           <span style={{"font-weight": "bold"}}>整日拷貝/區間刪除</span>

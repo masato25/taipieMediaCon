@@ -105,6 +105,10 @@ class JobTemplatePage extends React.Component {
     }
     thisfecth.then((e) => {
         console.log("eid", e)
+        if(e.errors){
+          message.error(e.errors)
+          return
+        }
         if(e.data.id){
           switch(this.state.action){
             case "new":

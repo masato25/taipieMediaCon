@@ -1,9 +1,16 @@
+import ifetch from '../../common/fetch.js'
 const _ = require('lodash')
 
 const getTemplateId = () => {
   let jid = window.location.href.match(/template\/(\d+)$/i) || ["","0"]
   return jid[1]
 }
+
+const getTemplateName = () => {
+  const id = getTemplateId()
+  return ifetch(`/api/job_template/${id}`, 'GET')
+}
+
 const getDefaultData = (self) => {
   let jid = getTemplateId()
   self.ifetch(`/api/time_jobs_list/${jid}`, 'GET').then((e) => {
@@ -223,4 +230,5 @@ module.exports = {
   setAddAction_Action,
   copyJobsAction_Action,
   getTemplateId,
+  getTemplateName,
 }
