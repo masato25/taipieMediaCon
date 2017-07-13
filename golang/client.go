@@ -9,10 +9,12 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
+	"regexp"
 	"sync"
 	"time"
 
@@ -91,6 +93,29 @@ type ServerComm struct {
 	Command   string `json:"command"`
 }
 
+func (mine ServerComm) GetFolder() string {
+	if !viper.GetBool("linux") {
+		r, _ := regexp.Compile("(([A-Z]+|[a-z]+):\\\\.*?)[^\\\\]+$")
+		matched := r.FindStringSubmatch(mine.Command)
+		if len(matched) == 0 {
+			log.Errorf("can not found any folder info matched with %v", mine.Command)
+			return ""
+		} else {
+			return matched[1]
+		}
+	} else {
+		r, _ := regexp.Compile("^(.*/)[^/]+$")
+		matched := r.FindStringSubmatch(mine.Command)
+		if len(matched) == 0 {
+			log.Errorf("can not found any folder info matched with %v", mine.Command)
+			return ""
+		} else {
+			return matched[1]
+		}
+	}
+	return ""
+}
+
 func reading(done chan int, u url.URL, reconn chan int) {
 	sm := ServerMsg{}
 	cmd := &exec.Cmd{}
@@ -129,8 +154,20 @@ func reading(done chan int, u url.URL, reconn chan int) {
 				JobInfoObj.Name = sm.Payload.Name
 				log.Infof("sm.Event: %v\n", sm.Event)
 				log.Infof("will run: %v\n", sm.Payload.Command)
+				workingDirectory := sm.Payload.GetFolder()
 				cmd = exec.Command(sm.Payload.Command)
-				cmd.Start()
+				if workingDirectory != "" {
+					/*dir, err := filepath.Abs(filepath.Dir(workingDirectory))
+					if err != nil {
+						log.Fatal(err)
+					}*/
+					cmd.Dir = workingDirectory
+					fmt.Printf("cd %v", workingDirectory)
+				}
+				err := cmd.Start()
+				if err != nil {
+					log.Errorf("run command got error: %v", err.Error())
+				}
 			} else if sm.Event == "stop" && JobInfoObj.Run {
 				cmd.Process.Kill()
 				log.Infof("*********************** job %s killed **********************", JobInfoObj.Name)
