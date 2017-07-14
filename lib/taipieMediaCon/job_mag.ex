@@ -110,6 +110,7 @@ defmodule TaipieMediaCon.JobMag do
             Logger.info("#{IO.inspect hd(o).end_time} <= #{IO.inspect currentTime}")
             Logger.info("#{IO.inspect hd(o).start_time} <= #{IO.inspect currentTime}")
             #Logger.debug("do nothig")
+            TaipieMediaCon.Endpoint.broadcast("room:lobby:" <> at.name, "continue", %{})
         end
       end
     end)
