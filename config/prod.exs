@@ -19,6 +19,18 @@ config :taipieMediaCon, TaipieMediaCon.Endpoint,
 # Do not print debug messages in production
 config :logger, level: :info
 
+config :logger,
+  backends: [{LoggerFileBackend, :info},
+             {LoggerFileBackend, :error}]
+
+config :logger, :info,
+  path: "./logs/info.log",
+  level: :info
+
+config :logger, :error,
+  path: "./logs/error.log",
+  level: :error
+
 # ## SSL Support
 #
 # To get SSL working, you will need to add the `https` key

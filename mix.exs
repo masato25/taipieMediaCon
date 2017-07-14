@@ -39,7 +39,9 @@ defmodule TaipieMediaCon.Mixfile do
      {:gettext, "~> 0.11"},
      {:cowboy, "~> 1.0"},
      {:timex, "~> 3.0"},
-     {:httpoison, "~> 0.11.1"}
+     {:httpoison, "~> 0.11.1"},
+     {:logger_file_backend, "~> 0.0"},
+     {:exrm, "~> 0.14.2"}
    ]
   end
 
