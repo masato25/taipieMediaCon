@@ -9,7 +9,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
@@ -27,9 +26,18 @@ import (
 )
 
 type JobInfo struct {
-	Mutex sync.Mutex
-	Name  string
-	Run   bool
+	Mutex            sync.Mutex
+	Name             string
+	Run              bool
+	WorkingDirectory string
+}
+
+func (mine JobInfo) Reset() {
+	mine.Mutex.Lock()
+	mine.Name = ""
+	mine.Run = false
+	mine.WorkingDirectory = ""
+	mine.Mutex.Unlock()
 }
 
 var JobInfoObj = JobInfo{}
@@ -143,11 +151,12 @@ func reading(done chan int, u url.URL, reconn chan int) {
 			c = nil
 			continue
 		}
-		log.Debugf("recv: %s", message)
 		if message != nil {
 			json.Unmarshal(message, &sm)
-			if !viper.GetBool("debug") {
+			if sm.Event != "continue" {
 				log.Infof("recv: %s", message)
+			} else {
+				log.Debugf("recv: %s", message)
 			}
 			if sm.Event == "run" && !JobInfoObj.Run {
 				JobInfoObj.Run = true
@@ -157,28 +166,53 @@ func reading(done chan int, u url.URL, reconn chan int) {
 				workingDirectory := sm.Payload.GetFolder()
 				cmd = exec.Command(sm.Payload.Command)
 				if workingDirectory != "" {
-					/*dir, err := filepath.Abs(filepath.Dir(workingDirectory))
-					if err != nil {
-						log.Fatal(err)
-					}*/
 					cmd.Dir = workingDirectory
-					fmt.Printf("cd %v", workingDirectory)
+					log.Debugf("cd %v", workingDirectory)
+					JobInfoObj.Mutex.Lock()
+					JobInfoObj.WorkingDirectory = workingDirectory
+					JobInfoObj.Mutex.Unlock()
 				}
 				err := cmd.Start()
+				go func() {
+					err := cmd.Wait()
+					if err != nil {
+						log.Errorf("cmd.Wait() got error: %v", err.Error())
+					}
+					JobInfoObj.Mutex.Lock()
+					JobInfoObj.Name = ""
+					JobInfoObj.Run = false
+					JobInfoObj.WorkingDirectory = ""
+					JobInfoObj.Mutex.Unlock()
+				}()
 				if err != nil {
 					log.Errorf("run command got error: %v", err.Error())
 				}
 			} else if sm.Event == "stop" && JobInfoObj.Run {
 				cmd.Process.Kill()
 				log.Infof("*********************** job %s killed **********************", JobInfoObj.Name)
-				JobInfoObj.Run = false
+				JobInfoObj.Mutex.Lock()
 				JobInfoObj.Name = ""
+				JobInfoObj.Run = false
+				JobInfoObj.WorkingDirectory = ""
+				JobInfoObj.Mutex.Unlock()
 			} else if sm.Event == "continue" && !JobInfoObj.Run {
 				JobInfoObj.Run = true
 				JobInfoObj.Name = sm.Payload.Name
 				log.Infof("will run: %v\n", sm.Payload.Command)
 				cmd = exec.Command(sm.Payload.Command)
+				cmd.Dir = JobInfoObj.WorkingDirectory
 				cmd.Start()
+				go func() {
+					err := cmd.Wait()
+					if err != nil {
+						log.Errorf("cmd.Wait() got error: %v", err.Error())
+					}
+					JobInfoObj.Mutex.Lock()
+					JobInfoObj.Name = ""
+					JobInfoObj.Run = false
+					JobInfoObj.WorkingDirectory = ""
+					JobInfoObj.Mutex.Unlock()
+				}()
 			} else {
 				if JobInfoObj.Run {
 					if JobInfoObj.Name != sm.Payload.Name {
