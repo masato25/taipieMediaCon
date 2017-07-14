@@ -131,7 +131,7 @@ defmodule TaipieMediaCon.TimeJobController do
     deleted_list = Repo.all(
       from t in TimeJob,
       where: t.start_time >= ^DateTime.from_unix!(String.to_integer(from_time), :second) and t.end_time <= ^DateTime.from_unix!(String.to_integer(to_time), :second) and t.job_template_id == ^template_id
-    ) 
+    )
 
     deleted_list |> Enum.map(fn o ->
         ptmp = Map.get(o, :id)
@@ -208,7 +208,7 @@ defmodule TaipieMediaCon.TimeJobController do
 
 
   def copyHoursData(conn, %{"start_time" => start_time, "end_time" => end_time, "copy_next_h" => copy_next_h, "job_template_id" => template_id}) do
-    time_job = getDataWithTimeInfo(start_time, end_time, template_id) |>
+    time_job = getDataWithTimeInfoV2(start_time, end_time, template_id) |>
       Enum.map(fn o ->
         #conver atom to string keys
         for {key, value} <- o, into: %{}, do: {Atom.to_string(key), value}
@@ -248,7 +248,7 @@ defmodule TaipieMediaCon.TimeJobController do
   end
 
   def copyDayData(conn, %{"start_time" => start_time, "end_time" => end_time, "copy_to" => copy_to, "time_diff" => time_diff, "job_template_id" => template_id}) do
-    time_job = getDataWithTimeInfo(start_time, end_time, template_id) |>
+    time_job = getDataWithTimeInfoV2(start_time, end_time, template_id) |>
       Enum.map(fn o ->
         #conver atom to string keys
         for {key, value} <- o, into: %{}, do: {Atom.to_string(key), value}
@@ -290,7 +290,7 @@ defmodule TaipieMediaCon.TimeJobController do
     template_id = Map.get(o, :job_template_id)
     res = Repo.all(
             from tj in TimeJob,
-            where: 
+            where:
             ((^stime >= tj.start_time and ^stime < tj.end_time) or (^etime > tj.start_time and ^etime <= tj.end_time )) and tj.job_template_id == ^template_id
           )
     Enum.count(res) != 0
@@ -305,7 +305,7 @@ defmodule TaipieMediaCon.TimeJobController do
     original = Timex.now
     timezone = Timex.Timezone.get("Asia/Taipei", original)
     Timex.from_unix(ts) |> Timex.Timezone.convert(timezone) |> Timex.to_erl()
-    
+
   end
 
   defp getDataWithTimeInfo(start_time, end_time, template_id) do
@@ -315,6 +315,21 @@ defmodule TaipieMediaCon.TimeJobController do
     a1 = Repo.all(
       from t in TimeJob,
       where: t.start_time >= ^bstate_time and t.end_time <= ^estate_time and t.job_template_id == ^template_id,
+      select: {t.id, t.start_time, t.end_time, t.program_id, t.job_template_id}
+    )
+    a1 |> Enum.map(fn o ->
+        {tid, start_time, end_time, program_id, job_template_id} = o
+        %{start_time: dateTimeToTimestamp(start_time), end_time: dateTimeToTimestamp(end_time), program_id: program_id, id: tid, job_template_id: job_template_id}
+      end)
+  end
+
+  defp getDataWithTimeInfoV2(start_time, end_time, template_id) do
+    bstate_time = Ecto.DateTime.from_unix!(start_time, :second)
+    estate_time = Ecto.DateTime.from_unix!(end_time, :second)
+
+    a1 = Repo.all(
+      from t in TimeJob,
+      where: (t.start_time <= ^estate_time or t.end_time >= ^bstate_time) and t.job_template_id == ^template_id,
       select: {t.id, t.start_time, t.end_time, t.program_id, t.job_template_id}
     )
     a1 |> Enum.map(fn o ->

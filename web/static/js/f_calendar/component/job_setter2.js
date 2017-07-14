@@ -131,6 +131,10 @@ class JobSetter extends React.Component {
             self.messageComp.error(e.errors)
           } else {
             self.messageComp.success("刪除成功")
+            setTimeout(
+              function(){
+                location.reload()
+              }, 1000)
           }
         }).catch((e) => {
           self.messageComp.error("刪除失敗請重新刷新頁面在重試")

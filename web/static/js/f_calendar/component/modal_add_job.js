@@ -102,7 +102,6 @@ class ModalAddJob extends React.Component {
                   value={this.props.pickedD}
                   onChange={this.props.setStime}
                   format={"HH"}
-                  disabled
                />
              </Col>
            </Row>
