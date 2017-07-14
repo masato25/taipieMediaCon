@@ -100,6 +100,7 @@ class JobTemplatePage extends React.Component {
     this.cleanForm = this.cleanForm.bind(this)
     this.getUpdate = this.getUpdate.bind(this)
     this.setTemplate = this.setTemplate.bind(this)
+    this.showModalNewAvatar = this.showModalNewAvatar.bind(this)
   }
   componentWillMount(){
     ifetch("/api/avatar", "GET").then((e) => {
@@ -117,6 +118,8 @@ class JobTemplatePage extends React.Component {
     this.setState({
       id: e.id,
       name: e.name,
+      descript: e.descript,
+      templateId: e.job_template_id
     })
   }
   handleOk(e) {
@@ -151,7 +154,7 @@ class JobTemplatePage extends React.Component {
               id:   this.state.id,
               name: this.state.name,
               descript: this.state.descript,
-              job_template_id: this.state.templateId,
+              templateId: this.state.templateId,
             }
           }).then((body) => {
             if(body.errors != undefined){
@@ -234,6 +237,18 @@ class JobTemplatePage extends React.Component {
   handleSubmit(e) {
 
   }
+  showModalNewAvatar(e, action) {
+    e.preventDefault()
+    this.setState((p,n) => {
+      return {
+        name: "",
+        descript: "",
+        templateId: null,
+        visible: true,
+        action
+      }
+    })
+  }
   showModal(e, action) {
     e.preventDefault()
     this.setState((p,n) => {
@@ -298,7 +313,10 @@ class JobTemplatePage extends React.Component {
                           <div style={{margin: '3px'}}>選擇樣板:</div>
                         </Col>
                         <Col span={15}>
-                          <Select style={{ width: 120 }} onChange={this.setTemplate}>
+                          <Select
+                            value={this.state.templateId}
+                            style={{ width: 120 }}
+                            onChange={this.setTemplate}>
                             {
                               this.state.jobTemplates.map((object) => {
                                 return (<Option key={object.id} value={object.id}>{object.name}</Option>)
@@ -322,7 +340,7 @@ class JobTemplatePage extends React.Component {
                   )
               }
             </Modal>
-            <Button type="primary" onClick={(e) => this.showModal(e, "new")}>建立應用端</Button>
+            <Button type="primary" onClick={(e) => this.showModalNewAvatar(e, "new")}>建立應用端</Button>
             <Table columns={this.state.columns} dataSource={this.state.data} />
           </div>
         </Content>
