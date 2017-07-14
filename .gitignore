@@ -30,3 +30,8 @@ priv/static
 yarn.lock
 mix.lock
 golang/13techart
+golang/*.gz
+golang/client
+golang/client.exe
+golang/linux/
+golang/windows/
