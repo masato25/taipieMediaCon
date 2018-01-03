@@ -154,7 +154,7 @@ class JobTemplatePage extends React.Component {
               id:   this.state.id,
               name: this.state.name,
               descript: this.state.descript,
-              templateId: this.state.templateId,
+              job_template_id: this.state.templateId,
             }
           }).then((body) => {
             if(body.errors != undefined){
