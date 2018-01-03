@@ -63,10 +63,10 @@ defmodule TaipieMediaCon.JobMag do
     agents = findStartedAgents()
     runAgents = agents |> Enum.filter(fn at -> 
       flag = false
-      if at.status == "run" && at.time_job_id != nil do
+      if at.status == "run" && !is_nil(at.time_job_id) do
         flag = true
       end 
-      if at.status == "start" && at.time_job_id != nil do
+      if at.status == "start" && !is_nil(at.time_job_id) do
         flag = true
       end
       flag
@@ -76,7 +76,7 @@ defmodule TaipieMediaCon.JobMag do
       if at.status == "pause" do
         flag = true
       end
-      if at.status == "start" && at.time_job_id == nil do
+      if at.status == "start" && is_nil(at.time_job_id) do
         flag = true
       end
       flag
@@ -86,14 +86,14 @@ defmodule TaipieMediaCon.JobMag do
     currentTime = Ecto.DateTime.from_unix!(DateTime.to_unix(Timex.now(), :second), :second)
     pauseAgents |> Enum.each(fn at ->
       newJob = getNewJob(at.job_template_id, currentTime)
-      Logger.info("newJob is null? #{newJob == nil}")
-      if newJob != nil  do
+      Logger.info("newJob is null? #{is_nil(newJob)}")
+      if !is_nil(newJob) do
         AvatarHelper.runAvatar(at.name, newJob.id)
         TaipieMediaCon.Endpoint.broadcast("room:lobby:" <> at.name, "run", newJob)
       end
     end)
     runAgents |> Enum.each(fn at ->
-      if at.time_job_id != nil do
+      if !is_nil(at.time_job_id) do
         o = Repo.all(from t in TimeJob, where: t.id == ^at.time_job_id, limit: 1)
         cond do
           o == [] ->
