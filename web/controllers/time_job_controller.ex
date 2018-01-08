@@ -247,34 +247,74 @@ defmodule TaipieMediaCon.TimeJobController do
     json(%{data: nowData})
   end
 
+  # def copyDayData(conn, %{"start_time" => start_time, "end_time" => end_time, "copy_to" => copy_to, "time_diff" => time_diff, "job_template_id" => template_id}) do
+  #   time_job = getDataWithTimeInfoV2(start_time, end_time, template_id) |>
+  #     Enum.map(fn o ->
+  #       #conver atom to string keys
+  #       for {key, value} <- o, into: %{}, do: {Atom.to_string(key), value}
+  #     end)
+  #   nowData = time_job |>
+  #     Enum.map(fn o ->
+  #       newed = Map.get(o, "end_time") + (time_diff)
+  #       o = Map.put(o, "end_time", newed)
+  #       startd = Map.get(o, "start_time") + (time_diff)
+  #       o = Map.put(o, "start_time", startd)
+  #       changeset = TimeJob.changeset(%TimeJob{}, o)
+  #       if !checkTimePeriod(changeset) do
+  #         case  Repo.insert(changeset) do
+  #           {:ok, time_job} ->
+  #             program_name = Repo.all(
+  #               from p in Program,
+  #               where: p.id == ^Map.get(time_job, :program_id),
+  #               select: {p.name}
+  #             ) |> hd |> elem(0)
+  #             time_job = Map.put(time_job, :program_name, program_name)
+  #             TimeJob.converAsApiObj(time_job)
+  #           {:error, changeset} ->
+  #             nil
+  #         end
+  #       else
+  #         nil
+  #       end
+  #     end)
+  #   nowData = nowData |>
+  #     Enum.filter(&(&1 != nil))
+  #   conn |>
+  #   json(%{data: nowData})
+  # end
+
   def copyDayData(conn, %{"start_time" => start_time, "end_time" => end_time, "copy_to" => copy_to, "time_diff" => time_diff, "job_template_id" => template_id}) do
     time_job = getDataWithTimeInfoV2(start_time, end_time, template_id) |>
       Enum.map(fn o ->
         #conver atom to string keys
         for {key, value} <- o, into: %{}, do: {Atom.to_string(key), value}
       end)
+      # change copy to n days
+      copy_next_d = time_diff / 86400
     nowData = time_job |>
       Enum.map(fn o ->
-        newed = Map.get(o, "end_time") + (time_diff)
-        o = Map.put(o, "end_time", newed)
-        startd = Map.get(o, "start_time") + (time_diff)
-        o = Map.put(o, "start_time", startd)
-        changeset = TimeJob.changeset(%TimeJob{}, o)
-        if !checkTimePeriod(changeset) do
-          case  Repo.insert(changeset) do
-            {:ok, time_job} ->
-              program_name = Repo.all(
-                from p in Program,
-                where: p.id == ^Map.get(time_job, :program_id),
-                select: {p.name}
-              ) |> hd |> elem(0)
-              time_job = Map.put(time_job, :program_name, program_name)
-              TimeJob.converAsApiObj(time_job)
-            {:error, changeset} ->
-              nil
+        for m <- 1..round(copy_next_d) do
+          newed = Map.get(o, "end_time") + (m*86400)
+          o = Map.put(o, "end_time", newed)
+          startd = Map.get(o, "start_time") + (m*86400)
+          o = Map.put(o, "start_time", startd)
+          changeset = TimeJob.changeset(%TimeJob{}, o)
+          if !checkTimePeriod(changeset) do
+            case  Repo.insert(changeset) do
+              {:ok, time_job} ->
+                program_name = Repo.all(
+                  from p in Program,
+                  where: p.id == ^Map.get(time_job, :program_id),
+                  select: {p.name}
+                ) |> hd |> elem(0)
+                time_job = Map.put(time_job, :program_name, program_name)
+                TimeJob.converAsApiObj(time_job)
+              {:error, changeset} ->
+                nil
+            end
+          else
+            nil
           end
-        else
-          nil
         end
       end)
     nowData = nowData |>
