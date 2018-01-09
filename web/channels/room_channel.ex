@@ -9,7 +9,6 @@ defmodule TaipieMediaCon.RoomChannel do
     jobName = Map.get(params, "job_name")
     jobRun = Map.get(params, "job_run")
     #{:ok, vbool} = GenServer.call(AgentMap, {:lookup, name})
-    #Logger.info("vbool: #{vbool == []}")
     #if vbool == [] do
     cond do
       # check avatar is created?

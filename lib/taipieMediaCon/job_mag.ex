@@ -6,7 +6,7 @@ defmodule TaipieMediaCon.JobMag do
   alias TaipieMediaCon.Program
   alias TaipieMediaCon.TimeJob
   alias TaipieMediaCon.Avatar
-  alias TaipieMediaCon.DBHelp.AvatarHelper 
+  alias TaipieMediaCon.DBHelp.AvatarHelper
 
   def start_link do
     GenServer.start_link(__MODULE__, [])
@@ -16,7 +16,7 @@ defmodule TaipieMediaCon.JobMag do
     :ets.new(:jstatus, [:set, :named_table])
     schedule_work()
     :ets.insert(:jstatus, {"status", "stop"})
-    
+
     talk2()
     {:ok, msg}
   end
@@ -26,8 +26,8 @@ defmodule TaipieMediaCon.JobMag do
     # |> converUnixTs
   end
 
-  defp converUnixTs(unixt) do
-    datetime = Timex.from_unix(unixt, 0)
+  def converUnixTs(unixt) do
+    datetime = Timex.from_unix(unixt)
     timezone = Timex.Timezone.get("Asia/Taipei", Timex.now())
     Timex.Timezone.convert(datetime, timezone)
   end
@@ -59,19 +59,19 @@ defmodule TaipieMediaCon.JobMag do
   end
 
   def talk2() do
-    # Logger.info(":ets.lookup(:jstatus, status): #{inspect :ets.lookup(:jstatus, "status")}")
+    # Logger.debug(":ets.lookup(:jstatus, status): #{inspect :ets.lookup(:jstatus, "status")}")
     agents = findStartedAgents()
-    runAgents = agents |> Enum.filter(fn at -> 
+    runAgents = agents |> Enum.filter(fn at ->
       flag = false
       if at.status == "run" && !is_nil(at.time_job_id) do
         flag = true
-      end 
+      end
       if at.status == "start" && !is_nil(at.time_job_id) do
         flag = true
       end
       flag
     end)
-    pauseAgents = agents |> Enum.filter(fn at -> 
+    pauseAgents = agents |> Enum.filter(fn at ->
       flag = false
       if at.status == "pause" do
         flag = true
@@ -81,12 +81,11 @@ defmodule TaipieMediaCon.JobMag do
       end
       flag
     end)
-    Logger.info("runAgents: #{Enum.count(runAgents)}, pauseAgents: #{Enum.count(pauseAgents)}")
+    # Logger.debug("runAgents: #{Enum.count(runAgents)}, pauseAgents: #{Enum.count(pauseAgents)}")
 
     currentTime = Ecto.DateTime.from_unix!(DateTime.to_unix(Timex.now(), :second), :second)
     pauseAgents |> Enum.each(fn at ->
       newJob = getNewJob(at.job_template_id, currentTime)
-      Logger.info("newJob is null? #{is_nil(newJob)}")
       if !is_nil(newJob) do
         AvatarHelper.runAvatar(at.name, newJob.id)
         TaipieMediaCon.Endpoint.broadcast("room:lobby:" <> at.name, "run", newJob)
@@ -97,7 +96,6 @@ defmodule TaipieMediaCon.JobMag do
         o = Repo.all(from t in TimeJob, where: t.id == ^at.time_job_id, limit: 1)
         cond do
           o == [] ->
-            Logger.info("o == []")
             AvatarHelper.pauseAvatar(at.name)
             TaipieMediaCon.Endpoint.broadcast("room:lobby:" <> at.name, "stop", %{command: "kill -9 aaa"})
             Logger.debug("will delete")
@@ -107,8 +105,8 @@ defmodule TaipieMediaCon.JobMag do
             Logger.debug("will delete")
           true ->
             # for debug
-            Logger.info("#{IO.inspect hd(o).end_time} <= #{IO.inspect currentTime}")
-            Logger.info("#{IO.inspect hd(o).start_time} <= #{IO.inspect currentTime}")
+            Logger.debug("#{IO.inspect hd(o).end_time} <= #{IO.inspect currentTime}")
+            Logger.debug("#{IO.inspect hd(o).start_time} <= #{IO.inspect currentTime}")
             #Logger.debug("do nothig")
             TaipieMediaCon.Endpoint.broadcast("room:lobby:" <> at.name, "continue", %{})
         end
@@ -134,14 +132,12 @@ defmodule TaipieMediaCon.JobMag do
     #    :ets.delete(:jstatus, "status")
     #    :ets.insert(:jstatus, {"status", "stop"})
     #  else
-    #    Logger.info("continue run job #{inspect obj}")
     #    TaipieMediaCon.Endpoint.broadcast("room:lobby:m1", "continue", obj)
     #  end
     #end
   end
 
   def handle_info(:talk2, state) do
-    # Logger.info("will talke 2")
     talk2()
     schedule_work()
     {:noreply, state}

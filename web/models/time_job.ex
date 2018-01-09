@@ -21,7 +21,6 @@ defmodule TaipieMediaCon.TimeJob do
   end
 
   def converAsApiObj(o) do
-    Logger.info("converAsApiObj #{inspect Map.get(o, :program)}")
     start_time = dateTimeToTimestamp(Map.get(o, :start_time))
     end_time = dateTimeToTimestamp(Map.get(o, :end_time))
     program_id = Map.get(o, :program_id)

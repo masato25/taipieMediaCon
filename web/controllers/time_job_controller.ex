@@ -19,7 +19,6 @@ defmodule TaipieMediaCon.TimeJobController do
   def create(conn, %{"time_job" => time_job_params}) do
     #%{"end_time" => %{"day" => "1", "hour" => "0", "minute" => "0", "month" => "1", "year" => "2017"}, "program_name" => "www", "start_time" => %{"day" => "1", "hour" => "0", "minute" => "0", "month" => "1", "year" => "2017"}}
     changeset = TimeJob.changeset(%TimeJob{}, time_job_params)
-    Logger.info("#{inspect time_job_params}")
     case Repo.insert(changeset) do
       {:ok, _time_job} ->
         conn
@@ -92,7 +91,6 @@ defmodule TaipieMediaCon.TimeJobController do
       Enum.map(fn o ->
         {tid, start_time, end_time, program_name, pid} = o
         o2 = %{start_time: start_time, end_time: end_time, program_name: program_name, id: tid, program_id: pid}
-        Logger.info("list #{inspect o}")
         TimeJob.converAsApiObj(o2)
       end)
     conn |>
@@ -182,7 +180,6 @@ defmodule TaipieMediaCon.TimeJobController do
                 select: {p.name}
               ) |> hd |> elem(0)
               time_job = Map.put(time_job, :program_name, program_name)
-              Logger.info("sss #{inspect time_job}")
               conn |>
                 json(%{
                   "info": "展示工作新增成功",
@@ -213,7 +210,7 @@ defmodule TaipieMediaCon.TimeJobController do
         #conver atom to string keys
         for {key, value} <- o, into: %{}, do: {Atom.to_string(key), value}
       end)
-    Logger.info("copy_time_job: #{Enum.count(time_job)}")
+    Logger.debug("[copyHoursData] copy_time_job: #{Enum.count(time_job)}")
     nowData = time_job |>
       Enum.map(fn o ->
         for m <- 1..copy_next_h do
@@ -291,6 +288,8 @@ defmodule TaipieMediaCon.TimeJobController do
       end)
       # change copy to n days
       copy_next_d = time_diff / 86400
+    Logger.debug("[copyDayData] copy_time_job: #{Enum.count(time_job)}")
+    nowData = %{}
     nowData = time_job |>
       Enum.map(fn o ->
         for m <- 1..round(copy_next_d) do
@@ -366,10 +365,9 @@ defmodule TaipieMediaCon.TimeJobController do
   defp getDataWithTimeInfoV2(start_time, end_time, template_id) do
     bstate_time = Ecto.DateTime.from_unix!(start_time, :second)
     estate_time = Ecto.DateTime.from_unix!(end_time, :second)
-
     a1 = Repo.all(
       from t in TimeJob,
-      where: (t.start_time <= ^estate_time or t.end_time >= ^bstate_time) and t.job_template_id == ^template_id,
+      where: (t.start_time >= ^bstate_time and t.end_time <= ^estate_time) and t.job_template_id == ^template_id,
       select: {t.id, t.start_time, t.end_time, t.program_id, t.job_template_id}
     )
     a1 |> Enum.map(fn o ->

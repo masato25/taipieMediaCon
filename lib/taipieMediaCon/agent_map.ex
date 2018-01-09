@@ -20,7 +20,6 @@ defmodule TaipieMediaCon.AgentMap do
   end
 
   def insert(s, obj) do
-    Logger.info("will insert #{IO.inspect obj}")
     GenServer.call(s, {:insert, obj})
   end
 
@@ -35,7 +34,6 @@ defmodule TaipieMediaCon.AgentMap do
 
   def handle_call({:lookup, obj}, _form, objs) do
     record = :ets.lookup(@tablename, obj)
-    Logger.info("record: \"#{IO.inspect(record == [])}\"")
     {:reply, {:ok, record}, objs}
   end
 
